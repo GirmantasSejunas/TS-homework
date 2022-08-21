@@ -37,6 +37,9 @@ class Person {
     getAge() {
         return this.age;
     }
+    getHeight() {
+        return this.height;
+    }
 }
 console.groupCollapsed('1. Sukurkite Person klasei savybes "name" ir "surname". Kiekvienai iš jų sukurkite setterius, ir bendrą getterį fullname');
 {

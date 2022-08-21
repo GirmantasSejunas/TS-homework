@@ -51,6 +51,9 @@ class Person {
     public getAge(): Person ['age'] {
         return this.age;
     }
+    public getHeight(): Person ['height'] {
+        return this.height
+    }
     
 }
 

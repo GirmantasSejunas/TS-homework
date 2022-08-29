@@ -3,5 +3,5 @@ type Model = {
     title: string,
     brandId: string,
   };
-  
+
   export default Model;

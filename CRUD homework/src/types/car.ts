@@ -4,5 +4,5 @@ type Car = {
     year: number,
     modelId: string,
   };
-  
+
   export default Car;

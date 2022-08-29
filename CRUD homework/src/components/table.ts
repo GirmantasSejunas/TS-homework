@@ -1,77 +1,97 @@
 import countObjectProperties from '../helpers/count-object-properties';
 
 type RowData = {
-    id: string;
-    [key: string]: string;
+  id: string,
+  [key: string]: string,
 };
+
 export type TableProps<Type> = {
-    title: string,
-    colums: Type,
-    rowData: Type[],
+  title: string,
+  columns: Type,
+  rowsData: Type[],
+  onDelete: (id: string) => void,
 };
 
 class Table<Type extends RowData> {
-public htmlElement: HTMLElement;
+  private props: TableProps<Type>;
 
-private props: TableProps<Type>;
+  private tbody: HTMLTableSectionElement;
 
-private tbody: HTMLTableSectionElement;
+  private thead: HTMLTableSectionElement;
 
-private thead: HTMLTableSectionElement;
+  public htmlElement: HTMLTableElement;
 
-public constructor(props: TableProps<Type>) {
+  public constructor(props: TableProps<Type>) {
     this.props = props;
 
-    this.checkColumsSynchronize();
+    this.checkColumnsCompatability();
 
     this.htmlElement = document.createElement('table');
     this.thead = document.createElement('thead');
     this.tbody = document.createElement('tbody');
 
     this.initialize();
-}
+    this.renderView();
+  }
 
-private checkColumsSynchronize = (): void => {
-    const { rowData, colums } = this.props;
+  private checkColumnsCompatability = (): void => {
+    const { rowsData, columns } = this.props;
 
-    if (this.props.rowData.length === 0) return;
-    const columnCount = countObjectProperties(colums);
+    if (this.props.rowsData.length === 0) return;
+    const columnCount = countObjectProperties(columns);
 
-    const columnsSynchronizeWithRowsData = rowData.every((row) => {
-        const rowsCount = countObjectProperties(row);
+    const columnsCompatableWithRowsData = rowsData.every((row) => {
+      const rowCellsCount = countObjectProperties(row);
 
-        return rowsCount === columnCount;
+      return rowCellsCount === columnCount;
     });
-    if (!columnsSynchronizeWithRowsData) {
-        throw new Error('Rows and Columns not match');
+
+    if (!columnsCompatableWithRowsData) {
+      throw new Error('Nesutampa lentelės stulpelių skaičius su eilučių stulpelių skaičiumi');
     }
-};
+  };
 
-private initializedHead = (): void => {
-    const { title, colums } = this.props;
+  private initialize = (): void => {
+    this.htmlElement.className = 'table table-striped order border p-3';
+    this.htmlElement.append(
+      this.thead,
+      this.tbody,
+    );
+  };
 
-    const headerArr = Object.values(colums);
-    const headerRowString = headerArr.map((header) => `<th> ${header}</th>`).join('');
+  private renderView = (): void => {
+    this.renderHeadView();
+    this.renderBodyView();
+  };
 
-    this.thead.innerHTML = `<tr>
-    <th colspan="${headerArr.length}" class="text-center h2">${title}</th>
-  </tr>
-  <tr>${headerRowString}</tr>`;
-};
+  private renderHeadView = (): void => {
+    const { title, columns } = this.props;
 
-private initializeBody = (): void => {
-    const { rowData, colums } = this.props;
+    const headersArray = Object.values(columns);
+    const headersRowHtmlString = headersArray.map((header) => `<th>${header}</th>`).join('');
+
+    this.thead.innerHTML = `
+      <tr>
+        <th colspan="${headersArray.length}" class="text-center h3">${title}</th>
+      </tr>
+      <tr>${headersRowHtmlString}</tr>`;
+  };
+
+  private renderBodyView = (): void => {
+    const { rowsData, columns } = this.props;
 
     this.tbody.innerHTML = '';
-    const rowsHtmlElements = rowData
-      .map((rowsData) => {
+    const rowsHtmlElements = rowsData
+      .map((rowData) => {
         const rowHtmlElement = document.createElement('tr');
 
-        const cellsHtmlString = Object.keys(colums)
-          .map((key) => `<td>${rowsData[key]}</td>`)
+        const cellsHtmlString = Object.keys(columns)
+          .map((key) => `<td>${rowData[key]}</td>`)
           .join(' ');
 
         rowHtmlElement.innerHTML = cellsHtmlString;
+
+        this.addActionsCell(rowHtmlElement, rowData.id);
 
         return rowHtmlElement;
       });
@@ -79,15 +99,29 @@ private initializeBody = (): void => {
     this.tbody.append(...rowsHtmlElements);
   };
 
-  private initialize = (): void => {
-    this.initializedHead();
-    this.initializeBody();
+  private addActionsCell = (rowHtmlElement: HTMLTableRowElement, id: string): void => {
+    const { onDelete } = this.props;
 
-    this.htmlElement.className = 'table table-striped order border p-3';
-    this.htmlElement.append(
-      this.thead,
-      this.tbody,
-    );
+    const buttonCell = document.createElement('td');
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.innerHTML = 'Delete';
+    deleteButton.className = 'btn btn-danger';
+    deleteButton.addEventListener('click', () => onDelete(id));
+    deleteButton.style.width = '100px';
+
+    buttonCell.append(deleteButton);
+    rowHtmlElement.append(buttonCell);
+  };
+
+  public updateProps = (newProps: Partial<TableProps<Type>>): void => {
+    this.props = {
+      ...this.props,
+      ...newProps,
+    };
+
+    this.renderView();
   };
 }
 
